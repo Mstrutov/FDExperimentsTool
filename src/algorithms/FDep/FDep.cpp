@@ -11,7 +11,7 @@ unsigned long long FDep::execute(){
     posCoverTree->addMostGeneralDependencies();
 
     boost::dynamic_bitset<> activePath;
-    calculatePositiveCover(negCoverTree, activePath);
+    calculatePositiveCover(*negCoverTree, activePath);
 
     return 0; 
 }
@@ -59,7 +59,7 @@ void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::d
     for (int attr = 1; attr <= this->numberAttributes; ++attr){
         if (negCoverSubtree.getChild(attr - 1)->getMaxAttrNumber() != 0){
             activePath.set(attr);
-            this->calculatePositiveCover(negCoverSubtree.getChild(attr - 1), activePath);
+            this->calculatePositiveCover(*negCoverSubtree.getChild(attr - 1), activePath);
             activePath.reset(attr);
         }
     }

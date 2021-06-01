@@ -1,25 +1,25 @@
 #include "FDTree.h"
 
 void FDTree::addMostGeneralDependencies(){
+//  Warning! This might be weak point. Check carefully
     this->rhsAttributes.resize(this->maxAttributeNumber + 1);
     for (int i = 0; i < this->maxAttributeNumber; ++i){
         isfd[i] = true;
     }
 }
 
-void FDTree::addFunctionalDependency(boost::dynamic_bitset<> lhs, const int& a){
-    FDTreeElement* treeElement;
+void FDTree::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, const int& a){
 
-    FDTreeElement* currentNode = this;
+    FDTree* currentNode = this;
     currentNode->addRhsAttribute(a);
-    
-    for (int i = lhs.find_next(0); i >= 0; i = lhs.find_next(i + 1)){
+
+    for (int i = lhs.find_first(); i >= 0; i = lhs.find_next(i)){
         if (currentNode->children[i - 1]->getMaxAttrNumber() == 0){
-            treeElement = new FDTreeElement(maxAttributeNumber);
+            FDTreeElement* treeElement = new FDTreeElement(maxAttributeNumber);
             currentNode->children[i - 1] = treeElement;
         }
 
-        currentNode = currentNode->getChild(i - 1);
+        currentNode = static_cast<FDTree*>(currentNode->getChild(i - 1));
         currentNode->addRhsAttribute(a);
     }
     currentNode->markAsLast(a - 1);
@@ -50,12 +50,3 @@ void FDTree::filterSpecializations(FDTree* filteredTree, boost::dynamic_bitset<>
         }
     }
 }
-
-
-    // !!! Обязательно глянуть корректно ли работает dynamic_bitset<>::find_next(). 
-    // Ибо кажется, что там разница в знаке > || >=  ???
-
-
-    // Возможно find_next(0) стоит заменить на find_first()
-    // А find_next(i + 1) замениь на find_next(i)
-

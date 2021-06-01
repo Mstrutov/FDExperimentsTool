@@ -6,7 +6,7 @@
 
 class FDTreeElement{
 protected:
-    static std::vector<FDTreeElement*> children;
+    std::vector<FDTreeElement*> children;
     boost::dynamic_bitset<> rhsAttributes;
     std::vector<bool> isfd; 
     int maxAttributeNumber;
@@ -20,22 +20,22 @@ public:
 
     FDTreeElement* getChild(const int& index) const;
 
-    int getMaxAttrNumber();
+    int getMaxAttrNumber() const;
 
     void addRhsAttribute(const int& index);
 
-    boost::dynamic_bitset<> getRhsAttributes();
+    boost::dynamic_bitset<> getRhsAttributes() const;
 
     void markAsLast(const int& index);
 
-    bool isFinalNode(const int& a);
+    bool isFinalNode(const int& a) const;
 
     bool getGeneralizationAndDelete
-    (boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhs);
+    (const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhs);
 
-    bool containsGeneralization(boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr);
+    bool containsGeneralization(const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr) const;
 
     bool getSpecialization
-    (boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhsOut);
+    (const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhsOut) const;
 
 };

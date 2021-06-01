@@ -4,13 +4,13 @@
 
 class FDTree: public FDTreeElement{
 public:
-    FDTree(const int& maxAttributeNumber);
+    explicit FDTree(const int& maxAttributeNumber=0) : FDTreeElement(maxAttributeNumber) {};
 
     void addMostGeneralDependencies();
 
-    void addFunctionalDependency(boost::dynamic_bitset<> lhs, const int& a);
+    void addFunctionalDependency(const boost::dynamic_bitset<>& lhs, const int& a);
 
-    void filterSpecialization();
-    void containtsGeneralization();
+    void filterSpecializations();
 
+    void filterSpecializations(FDTree* filteredTree, boost::dynamic_bitset<> activePath);
 };

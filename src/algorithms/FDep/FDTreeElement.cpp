@@ -2,30 +2,30 @@
 
 
 bool FDTreeElement::checkFd(const int& i) const{
-    return isfd[i];
+    return this->isfd[i];
 };
 
 FDTreeElement* FDTreeElement::getChild(const int& i) const{
-    return children[i];
+    return this->children[i];
 }
 
 void FDTreeElement::addRhsAttribute(const int& i){
     this->rhsAttributes.set(i);
 }
 
-boost::dynamic_bitset<> FDTreeElement::getRhsAttributes(){
+boost::dynamic_bitset<> FDTreeElement::getRhsAttributes() const{
     return this->rhsAttributes;
 }
 
 void FDTreeElement::markAsLast(const int& i){
-    isfd[i] = true;
+    this->isfd[i] = true;
 }
 
-int FDTreeElement::getMaxAttrNumber(){
+int FDTreeElement::getMaxAttrNumber() const{
     return this->maxAttributeNumber;
 }
 
-bool FDTreeElement::isFinalNode(const int& a){
+bool FDTreeElement::isFinalNode(const int& a) const{
     if (!this->rhsAttributes[a]){
         return false;
     }
@@ -38,18 +38,22 @@ bool FDTreeElement::isFinalNode(const int& a){
 }
 
 bool FDTreeElement::containsGeneralization
-(boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr){
+(const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr) const
+{
     if (this->isfd[a - 1]){
         return true;
     }
 
-    bool found = false;
-    int nextSetAttr = lhs.find_next(currentAttr + 1);
+    int nextSetAttr = lhs.find_next(currentAttr);
     if (nextSetAttr < 0){
         return false;
     }
 
-    if (this->children[nextSetAttr - 1]->maxAttributeNumber != 0 && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
+    bool found = false;
+
+    if (this->children[nextSetAttr - 1]->maxAttributeNumber != 0 &&
+        this->children[nextSetAttr - 1]->getRhsAttributes()[a])
+    {
         found = this->children[nextSetAttr - 1]->containsGeneralization(lhs, a, nextSetAttr);
     }
 
@@ -61,18 +65,19 @@ bool FDTreeElement::containsGeneralization
 }
 
 bool FDTreeElement::getGeneralizationAndDelete
-(boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhs)
+(const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhs)
 {
-    bool found = false;
     if (this->isfd[a - 1]){
         this->isfd[a - 1] = false;
         this->rhsAttributes.reset(a);
         return true;
     }
-    int nextSetAttr = lhs.find_next(currentAttr + 1);
-    if (nextSetAttr < 0){     // УСЛОВИЕ ТОГО ЧТО ФАЙНД НЕКСТ НЕ СРАБОТАЕТ, ПРОВЕРИТЬ
+    int nextSetAttr = lhs.find_next(currentAttr);
+    if (nextSetAttr == boost::dynamic_bitset<>::npos){
         return false;
     }
+
+    bool found = false;
 
     if (this->children[nextSetAttr - 1]->maxAttributeNumber != 0 && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
         found = this->children[nextSetAttr - 1]->getGeneralizationAndDelete(lhs, a, nextSetAttr, specLhs);
@@ -93,7 +98,7 @@ bool FDTreeElement::getGeneralizationAndDelete
 }
 
 bool FDTreeElement::getSpecialization
-(boost::dynamic_bitset<> lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhsOut)
+(const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhsOut) const
 {
     if (!this->rhsAttributes[a]){
         return false;
@@ -101,7 +106,7 @@ bool FDTreeElement::getSpecialization
 
     bool found = false;
     int attr = std::max(currentAttr, 1);
-    int nextSetAttr = lhs.find_next(currentAttr + 1);
+    int nextSetAttr = lhs.find_next(currentAttr);
 
     if (nextSetAttr < 0){
         while (!found && attr <= this->maxAttributeNumber){
@@ -118,7 +123,11 @@ bool FDTreeElement::getSpecialization
 
     while (!found && attr <= nextSetAttr){
         if (this->children[attr - 1]->maxAttributeNumber != 0 && this->children[attr - 1]->getRhsAttributes()[a]){
-           found = this->children[std::min(attr, nextSetAttr) - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);
+            if (attr < nextSetAttr){
+                found = this->children[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);
+            } else{
+                found = this->children[nextSetAttr - 1]->getSpecialization(lhs, a, nextSetAttr, specLhsOut);
+            }
         }
         ++attr;
     }
