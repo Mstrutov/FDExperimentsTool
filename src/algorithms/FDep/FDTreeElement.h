@@ -4,38 +4,50 @@
 #include <boost/dynamic_bitset.hpp>
 #include <vector>
 
-class FDTreeElement{
-protected:
-    std::vector<FDTreeElement*> children;
+// For printing Dependencies
+#include <string>
+#include <iostream>
+
+class FDTreeElement: public std::enable_shared_from_this<FDTreeElement>{
+private:
+    std::vector<std::shared_ptr<FDTreeElement>> children;
     boost::dynamic_bitset<> rhsAttributes;
     std::vector<bool> isfd; 
-    int maxAttributeNumber;
+    size_t maxAttributeNumber;
 public:
-    explicit FDTreeElement(const int& maxAttributeNumber=0): maxAttributeNumber(maxAttributeNumber){
-        this->children.resize(maxAttributeNumber);
-        this->isfd.resize(maxAttributeNumber);
-    };
-    
-    bool checkFd(const int& index) const;
+    explicit FDTreeElement(const size_t& maxAttributeNumber): maxAttributeNumber(maxAttributeNumber){
+        children.resize(maxAttributeNumber);
+        isfd.resize(maxAttributeNumber);
+        rhsAttributes.resize(maxAttributeNumber + 1);
+    }
 
-    FDTreeElement* getChild(const int& index) const;
+    bool checkFd(const size_t& index) const;
 
-    int getMaxAttrNumber() const;
+    std::shared_ptr<FDTreeElement> getChild(const size_t& index) const;
 
-    void addRhsAttribute(const int& index);
+    void addRhsAttribute(const size_t& index);
 
     boost::dynamic_bitset<> getRhsAttributes() const;
 
-    void markAsLast(const int& index);
+    void markAsLast(const size_t& index);
 
-    bool isFinalNode(const int& a) const;
+    bool isFinalNode(const size_t& a) const;
 
     bool getGeneralizationAndDelete
-    (const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhs);
+    (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhs);
 
-    bool containsGeneralization(const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr) const;
+    bool containsGeneralization(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr) const;
 
     bool getSpecialization
-    (const boost::dynamic_bitset<>& lhs, const int& a, const int& currentAttr, boost::dynamic_bitset<> specLhsOut) const;
+    (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<> specLhsOut) const;
 
+    void addMostGeneralDependencies();
+
+    void addFunctionalDependency(const boost::dynamic_bitset<>& lhs, const size_t& a);
+
+    void filterSpecializations();
+
+    void filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<> activePath);
+
+    void printDependencies(boost::dynamic_bitset<> activePath);
 };

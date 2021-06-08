@@ -8,16 +8,14 @@
 #include "FDAlgorithm.h"
 #include "RelationData.h"
 #include "FDTreeElement.h"
-#include "FDTree.h"
 
 class FDep : public FDAlgorithm {
 private:
     std::vector <std::string> columnNames;
-    int numberAttributes=0;
-    int numberRows=0;
+    size_t numberAttributes=0;
 
-    std::unique_ptr<FDTree> negCoverTree;
-    std::unique_ptr<FDTree> posCoverTree;
+    std::shared_ptr<FDTreeElement> negCoverTree;
+    std::shared_ptr<FDTreeElement> posCoverTree;
     
     std::vector<std::vector<int>> tuples;
 
@@ -27,7 +25,7 @@ private:
     void violatedFDs(const std::vector<int>& t1, const std::vector<int>& t2);
 
     void calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<> activePath);
-    void specializePositiveCover(boost::dynamic_bitset<> lhs, const int& a);
+    void specializePositiveCover(const boost::dynamic_bitset<>& lhs, const size_t& a);
 
     void loadData();
 public:
