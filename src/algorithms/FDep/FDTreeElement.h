@@ -39,7 +39,7 @@ public:
     bool containsGeneralization(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr) const;
 
     bool getSpecialization
-    (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<> specLhsOut) const;
+    (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhsOut) const;
 
     void addMostGeneralDependencies();
 
@@ -47,7 +47,7 @@ public:
 
     void filterSpecializations();
 
-    void filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<> activePath);
+    void filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<>& activePath);
 
-    void printDependencies(boost::dynamic_bitset<> activePath);
+    void printDependencies(boost::dynamic_bitset<>& activePath);
 };

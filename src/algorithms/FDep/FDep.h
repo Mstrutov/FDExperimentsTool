@@ -24,7 +24,7 @@ private:
 
     void violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2);
 
-    void calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<> activePath);
+    void calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<>& activePath);
     void specializePositiveCover(const boost::dynamic_bitset<>& lhs, const size_t& a);
 
     void loadData();

@@ -35,8 +35,8 @@ bool FDTreeElement::isFinalNode(const size_t& a) const{
 bool FDTreeElement::containsGeneralization
 (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr) const
 {
-    if (!this->isfd[a - 1]){
-        return false;
+    if (this->isfd[a - 1]){
+        return true;
     }
     
     size_t nextSetAttr = lhs.find_next(currentAttr);
@@ -86,7 +86,7 @@ bool FDTreeElement::getGeneralizationAndDelete
 }
 
 bool FDTreeElement::getSpecialization
-(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<> specLhsOut) const
+(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhsOut) const
 {
     if (!this->rhsAttributes[a]){
         return false;
@@ -162,7 +162,7 @@ void FDTreeElement::filterSpecializations(){
     this->isfd = std::move(filteredTree->isfd);
 }
 
-void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<> activePath){
+void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<>& activePath){
     activePath.resize(this->maxAttributeNumber + 1);
     for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
         if (this->children[attr - 1]){
@@ -180,7 +180,7 @@ void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, boo
     }
 }
 
-void FDTreeElement::printDependencies(boost::dynamic_bitset<> activePath) {
+void FDTreeElement::printDependencies(boost::dynamic_bitset<>& activePath) {
     std::string out;
     for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
         if (this->isfd[attr - 1]){

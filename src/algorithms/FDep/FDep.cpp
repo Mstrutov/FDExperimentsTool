@@ -23,8 +23,6 @@ unsigned long long FDep::execute(){
     std::chrono::milliseconds elapsed_milliseconds = 
     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
 
-    std::cout << "Ellapsed Time: " << elapsed_milliseconds.count() << std::endl;
-
     boost::dynamic_bitset<> aPath(this->numberAttributes + 1);
     posCoverTree->printDependencies(aPath);
 
@@ -64,7 +62,7 @@ void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>&
     }
 }
 
-void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<> activePath){
+void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<>& activePath){
     /* Building Positive Cover from Negative*/
 
     for (size_t attr = 1; attr <= this->numberAttributes; ++attr){
@@ -116,6 +114,7 @@ void FDep::loadData(){
     std::vector<std::string> nextLine; 
     while (inputGenerator_.getHasNext()){
         nextLine = inputGenerator_.parseNext();
+        if (!nextLine.size()) break;
         this->tuples.push_back(std::vector<size_t>(this->numberAttributes));
         for (size_t i = 0; i < this->numberAttributes; ++i){
             this->tuples.back()[i] = std::hash<std::string>{}(nextLine[i]);
