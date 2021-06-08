@@ -17,12 +17,12 @@ private:
     std::shared_ptr<FDTreeElement> negCoverTree;
     std::shared_ptr<FDTreeElement> posCoverTree;
     
-    std::vector<std::vector<int>> tuples;
+    std::vector<std::vector<size_t>> tuples;
 
     void initialize();
     void negativeCover();
 
-    void violatedFDs(const std::vector<int>& t1, const std::vector<int>& t2);
+    void violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2);
 
     void calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<> activePath);
     void specializePositiveCover(const boost::dynamic_bitset<>& lhs, const size_t& a);

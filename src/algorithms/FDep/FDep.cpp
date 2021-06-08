@@ -2,9 +2,14 @@
 #include "ColumnLayoutRelationData.h"
 
 #include <iostream>
+#include <chrono>
 
 unsigned long long FDep::execute(){
+
     initialize();
+
+    auto startTime = std::chrono::system_clock::now();
+
     negativeCover();
 
     this->tuples.clear(); 
@@ -15,10 +20,15 @@ unsigned long long FDep::execute(){
     boost::dynamic_bitset<> activePath(this->numberAttributes + 1);
     calculatePositiveCover(*negCoverTree, activePath);
 
+    std::chrono::milliseconds elapsed_milliseconds = 
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
+
+    std::cout << "Ellapsed Time: " << elapsed_milliseconds.count() << std::endl;
+
     boost::dynamic_bitset<> aPath(this->numberAttributes + 1);
     posCoverTree->printDependencies(aPath);
 
-    return 0; 
+    return elapsed_milliseconds.count(); 
 }
 
 void FDep::initialize(){
@@ -36,7 +46,7 @@ void FDep::negativeCover(){
     this->negCoverTree->filterSpecializations();
 }
 
-void FDep::violatedFDs(const std::vector<int>& t1, const std::vector<int>& t2){
+void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2){
     /* Adding the least general dependencies, violated by t1 and t2 to Negative Cover*/
     boost::dynamic_bitset<> equalAttr(this->numberAttributes + 1);
     for (size_t i = 1; i <= this->numberAttributes; ++i)
@@ -96,12 +106,20 @@ void FDep::specializePositiveCover(const boost::dynamic_bitset<>& lhs, const siz
 
 
 void FDep::loadData(){
-    const int numberRows = 4;
-    this->numberAttributes = 4;
+    this->numberAttributes = inputGenerator_.getNumberOfColumns();
+    this->columnNames.resize(this->numberAttributes);
 
-    this->tuples.resize(numberRows);
-    tuples[0] = std::vector<int>{0, 0, 0, 0};
-    tuples[1] = std::vector<int>{1, 1, 0, 0};
-    tuples[2] = std::vector<int>{0, 2, 0, 2};   
-    tuples[3] = std::vector<int>{1, 2, 3, 4};
+    for (size_t i = 0; i < this->numberAttributes; ++i){
+        columnNames[i] = inputGenerator_.getColumnName(i);
+    }
+
+    std::vector<std::string> nextLine; 
+    while (inputGenerator_.getHasNext()){
+        nextLine = inputGenerator_.parseNext();
+        this->tuples.push_back(std::vector<size_t>(this->numberAttributes));
+        for (size_t i = 0; i < this->numberAttributes; ++i){
+            this->tuples.back()[i] = std::hash<std::string>{}(nextLine[i]);
+        }
+    } 
+
 }
