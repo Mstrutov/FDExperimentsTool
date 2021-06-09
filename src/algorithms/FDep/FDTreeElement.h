@@ -13,7 +13,7 @@ private:
     std::vector<std::unique_ptr<FDTreeElement>> children;
     boost::dynamic_bitset<> rhsAttributes;
     size_t maxAttributeNumber;
-    std::vector<bool> isfd; 
+    boost::dynamic_bitset<> isfd; 
 public:
     explicit FDTreeElement(const size_t& maxAttributeNumber): maxAttributeNumber(maxAttributeNumber){
         children.resize(maxAttributeNumber);
@@ -30,7 +30,7 @@ public:
 
     void addRhsAttribute(const size_t& index);
 
-    boost::dynamic_bitset<> getRhsAttributes() const;
+    const boost::dynamic_bitset<>& getRhsAttributes() const;
 
     void markAsLast(const size_t& index);
 

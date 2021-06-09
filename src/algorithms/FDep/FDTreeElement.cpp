@@ -12,12 +12,12 @@ void FDTreeElement::addRhsAttribute(const size_t& i){
     this->rhsAttributes.set(i);
 }
 
-boost::dynamic_bitset<> FDTreeElement::getRhsAttributes() const{
+const boost::dynamic_bitset<>& FDTreeElement::getRhsAttributes() const{
     return this->rhsAttributes;
 }
 
 void FDTreeElement::markAsLast(const size_t& i){
-    this->isfd[i] = true;
+    this->isfd.set(i);
 }
 
 bool FDTreeElement::isFinalNode(const size_t& a) const{
@@ -58,7 +58,7 @@ bool FDTreeElement::getGeneralizationAndDelete
 (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhs)
 {
     if (this->isfd[a - 1]){
-        this->isfd[a - 1] = false;
+        this->isfd.reset(a - 1);
         this->rhsAttributes.reset(a);
         return true;
     }
@@ -85,6 +85,7 @@ bool FDTreeElement::getGeneralizationAndDelete
     return found;
 }
 
+
 bool FDTreeElement::getSpecialization
 (const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhsOut) const
 {
@@ -109,19 +110,17 @@ bool FDTreeElement::getSpecialization
         return true;
     }
 
-    while (!found && attr <= nextSetAttr){
+    while (!found && attr < nextSetAttr){
         if (this->children[attr - 1] && this->children[attr - 1]->getRhsAttributes()[a]){
-            if (attr < nextSetAttr){
-                found = this->children[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);
-            } else{
-                found = this->children[nextSetAttr - 1]->getSpecialization(lhs, a, nextSetAttr, specLhsOut);
-            }
+            found = this->children[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);   
         }
         ++attr;
     }
-    if (found){
-        specLhsOut.set(attr - 1);
+    if (!found && this->children[nextSetAttr - 1] && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
+        found = this->children[nextSetAttr - 1]->getSpecialization(lhs, a, nextSetAttr, specLhsOut);
     }
+
+    specLhsOut.set(attr - 1, found);
 
     return found;
 }
@@ -153,7 +152,7 @@ void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, 
 }
 
 void FDTreeElement::filterSpecializations(){
-    boost::dynamic_bitset<> activePath;
+    boost::dynamic_bitset<> activePath(this->maxAttributeNumber + 1);
     std::unique_ptr<FDTreeElement> filteredTree = std::make_unique<FDTreeElement>(this->maxAttributeNumber);
 
     this->filterSpecializationsHelper(*filteredTree, activePath);
@@ -163,7 +162,6 @@ void FDTreeElement::filterSpecializations(){
 }
 
 void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<>& activePath){
-    activePath.resize(this->maxAttributeNumber + 1);
     for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
         if (this->children[attr - 1]){
             activePath.set(attr);

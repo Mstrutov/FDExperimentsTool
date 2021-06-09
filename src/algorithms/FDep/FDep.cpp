@@ -14,7 +14,7 @@ unsigned long long FDep::execute(){
 
     this->tuples.clear(); 
 
-    this->posCoverTree = std::make_shared<FDTreeElement>(this->numberAttributes);
+    this->posCoverTree = new FDTreeElement(this->numberAttributes);
     this->posCoverTree->addMostGeneralDependencies();
 
     boost::dynamic_bitset<> activePath(this->numberAttributes + 1);
@@ -26,6 +26,9 @@ unsigned long long FDep::execute(){
     boost::dynamic_bitset<> aPath(this->numberAttributes + 1);
     posCoverTree->printDependencies(aPath);
 
+    delete this->posCoverTree;
+    delete this->negCoverTree;
+
     return elapsed_milliseconds.count(); 
 }
 
@@ -36,7 +39,7 @@ void FDep::initialize(){
 
 void FDep::negativeCover(){
     /* Building Negative Cover */
-    this->negCoverTree = std::make_shared<FDTreeElement>(this->numberAttributes);
+    this->negCoverTree = new FDTreeElement(this->numberAttributes);
     for (size_t i = 0; i < tuples.size(); ++i)
         for (size_t j = i + 1; j < tuples.size(); ++j)
             violatedFDs(tuples[i], tuples[j]);

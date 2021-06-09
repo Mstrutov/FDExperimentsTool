@@ -14,8 +14,8 @@ private:
     std::vector <std::string> columnNames;
     size_t numberAttributes=0;
 
-    std::shared_ptr<FDTreeElement> negCoverTree;
-    std::shared_ptr<FDTreeElement> posCoverTree;
+    FDTreeElement* negCoverTree;
+    FDTreeElement* posCoverTree;
     
     std::vector<std::vector<size_t>> tuples;
 
