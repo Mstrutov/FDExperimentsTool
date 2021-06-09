@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 
-class FDTreeElement: public std::enable_shared_from_this<FDTreeElement>{
+class FDTreeElement{
 private:
     std::vector<std::shared_ptr<FDTreeElement>> children;
     boost::dynamic_bitset<> rhsAttributes;
@@ -20,6 +20,9 @@ public:
         isfd.resize(maxAttributeNumber);
         rhsAttributes.resize(maxAttributeNumber + 1);
     }
+
+    FDTreeElement (const FDTreeElement&) = delete;
+    FDTreeElement& operator=(const FDTreeElement&) = delete;
 
     bool checkFd(const size_t& index) const;
 

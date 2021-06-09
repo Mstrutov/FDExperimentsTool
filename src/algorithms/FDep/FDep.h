@@ -32,7 +32,7 @@ public:
 
     explicit FDep(std::filesystem::path const& path, char separator = ',', bool hasHeader = true):
         FDAlgorithm(path, separator, hasHeader){}
-    ~FDep() override {};
+    ~FDep() override = default;;
 
     unsigned long long execute() override;
 };

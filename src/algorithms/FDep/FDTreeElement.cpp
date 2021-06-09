@@ -2,7 +2,7 @@
 
 bool FDTreeElement::checkFd(const size_t& i) const{
     return this->isfd[i];
-};
+}
 
 std::shared_ptr<FDTreeElement> FDTreeElement::getChild(const size_t& i) const{
     return this->children[i];
@@ -137,7 +137,7 @@ void FDTreeElement::addMostGeneralDependencies(){
 }
 
 void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, const size_t& a){
-    std::shared_ptr<FDTreeElement> currentNode = shared_from_this();
+    FDTreeElement* currentNode = this;
     this->addRhsAttribute(a);
 
     for (size_t i = lhs.find_first(); i != boost::dynamic_bitset<>::npos; i = lhs.find_next(i)){
@@ -145,7 +145,7 @@ void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, 
             currentNode->children[i - 1] = std::make_shared<FDTreeElement>(this->maxAttributeNumber);
         }
 
-        currentNode = currentNode->getChild(i - 1);
+        currentNode = currentNode->getChild(i - 1).get();
         currentNode->addRhsAttribute(a);
     }
 

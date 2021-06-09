@@ -46,17 +46,15 @@ void FDep::negativeCover(){
 
 void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2){
     /* Adding the least general dependencies, violated by t1 and t2 to Negative Cover*/
-    boost::dynamic_bitset<> equalAttr(this->numberAttributes + 1);
-    for (size_t i = 1; i <= this->numberAttributes; ++i)
-        equalAttr.set(i);
+    boost::dynamic_bitset<> equalAttr(this->numberAttributes + 1, (2 << this->numberAttributes) - 1);
+    equalAttr.reset(0);
     boost::dynamic_bitset<> diffAttr(this->numberAttributes + 1);
 
     for (size_t attr = 0; attr < this->numberAttributes; ++attr){
-        if (t1[attr] != t2[attr])
-            diffAttr.set(attr + 1);
+        diffAttr[attr + 1] = (t1[attr] != t2[attr]);
     }
 
-    equalAttr = equalAttr - diffAttr;
+    equalAttr -= diffAttr;
     for (size_t attr = diffAttr.find_first(); attr != boost::dynamic_bitset<>::npos; attr = diffAttr.find_next(attr)){
         this->negCoverTree->addFunctionalDependency(equalAttr, attr);
     }
@@ -97,8 +95,7 @@ void FDep::specializePositiveCover(const boost::dynamic_bitset<>& lhs, const siz
             }
         }
 
-        specLhs.clear();
-        specLhs.resize(this->numberAttributes + 1);
+        specLhs.reset();
     }
 }
 
@@ -114,8 +111,8 @@ void FDep::loadData(){
     std::vector<std::string> nextLine; 
     while (inputGenerator_.getHasNext()){
         nextLine = inputGenerator_.parseNext();
-        if (!nextLine.size()) break;
-        this->tuples.push_back(std::vector<size_t>(this->numberAttributes));
+        if (nextLine.empty()) break;
+        this->tuples.emplace_back(std::vector<size_t>(this->numberAttributes));
         for (size_t i = 0; i < this->numberAttributes; ++i){
             this->tuples.back()[i] = std::hash<std::string>{}(nextLine[i]);
         }
