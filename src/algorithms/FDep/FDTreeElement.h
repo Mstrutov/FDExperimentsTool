@@ -10,14 +10,14 @@
 
 class FDTreeElement{
 private:
-    std::vector<std::shared_ptr<FDTreeElement>> children;
+    std::vector<std::unique_ptr<FDTreeElement>> children;
     boost::dynamic_bitset<> rhsAttributes;
-    std::vector<bool> isfd; 
     size_t maxAttributeNumber;
+    std::vector<bool> isfd; 
 public:
     explicit FDTreeElement(const size_t& maxAttributeNumber): maxAttributeNumber(maxAttributeNumber){
         children.resize(maxAttributeNumber);
-        isfd.resize(maxAttributeNumber);
+        isfd.resize(this->maxAttributeNumber);
         rhsAttributes.resize(maxAttributeNumber + 1);
     }
 
@@ -26,7 +26,7 @@ public:
 
     bool checkFd(const size_t& index) const;
 
-    std::shared_ptr<FDTreeElement> getChild(const size_t& index) const;
+    FDTreeElement* getChild(const size_t& index) const;
 
     void addRhsAttribute(const size_t& index);
 

@@ -4,8 +4,8 @@ bool FDTreeElement::checkFd(const size_t& i) const{
     return this->isfd[i];
 }
 
-std::shared_ptr<FDTreeElement> FDTreeElement::getChild(const size_t& i) const{
-    return this->children[i];
+FDTreeElement* FDTreeElement::getChild(const size_t& i) const{
+    return this->children[i].get();
 }
 
 void FDTreeElement::addRhsAttribute(const size_t& i){
@@ -142,10 +142,10 @@ void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, 
 
     for (size_t i = lhs.find_first(); i != boost::dynamic_bitset<>::npos; i = lhs.find_next(i)){
         if (currentNode->children[i - 1] == nullptr){
-            currentNode->children[i - 1] = std::make_shared<FDTreeElement>(this->maxAttributeNumber);
+            currentNode->children[i - 1] = std::make_unique<FDTreeElement>(this->maxAttributeNumber);
         }
 
-        currentNode = currentNode->getChild(i - 1).get();
+        currentNode = currentNode->getChild(i - 1);
         currentNode->addRhsAttribute(a);
     }
 
@@ -154,7 +154,7 @@ void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, 
 
 void FDTreeElement::filterSpecializations(){
     boost::dynamic_bitset<> activePath;
-    std::shared_ptr<FDTreeElement> filteredTree = std::make_shared<FDTreeElement>(this->maxAttributeNumber);
+    std::unique_ptr<FDTreeElement> filteredTree = std::make_unique<FDTreeElement>(this->maxAttributeNumber);
 
     this->filterSpecializationsHelper(*filteredTree, activePath);
 
