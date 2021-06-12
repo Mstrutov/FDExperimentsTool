@@ -1,7 +1,6 @@
 #include "FDep.h"
 #include "ColumnLayoutRelationData.h"
 
-#include <iostream>
 #include <chrono>
 
 unsigned long long FDep::execute(){
@@ -12,67 +11,66 @@ unsigned long long FDep::execute(){
 
     negativeCover();
 
-    this->tuples.clear(); 
+    this->tuples_.shrink_to_fit();
 
-    this->posCoverTree = new FDTreeElement(this->numberAttributes);
-    this->posCoverTree->addMostGeneralDependencies();
+    this->posCoverTree_ = new FDTreeElement(this->numberAttributes_);
+    this->posCoverTree_->addMostGeneralDependencies();
 
-    boost::dynamic_bitset<> activePath(this->numberAttributes + 1);
-    calculatePositiveCover(*negCoverTree, activePath);
+    std::bitset<kMaxAttrNum> activePath;
+    calculatePositiveCover(*this->negCoverTree_, activePath);
 
     std::chrono::milliseconds elapsed_milliseconds = 
     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
 
-    boost::dynamic_bitset<> aPath(this->numberAttributes + 1);
-    posCoverTree->printDependencies(aPath);
+    // posCoverTree->printDep("recent_call_result.txt", this->columnNames);
 
-    delete this->posCoverTree;
-    delete this->negCoverTree;
+    delete this->posCoverTree_;
+    delete this->negCoverTree_;
 
     return elapsed_milliseconds.count(); 
 }
 
 void FDep::initialize(){
     loadData();
-    //setColumnIndetifiers();
 }
 
 void FDep::negativeCover(){
     /* Building Negative Cover */
-    this->negCoverTree = new FDTreeElement(this->numberAttributes);
-    for (size_t i = 0; i < tuples.size(); ++i)
-        for (size_t j = i + 1; j < tuples.size(); ++j)
-            violatedFDs(tuples[i], tuples[j]);
+    this->negCoverTree_ = new FDTreeElement(this->numberAttributes_);
+    for (auto i = this->tuples_.begin(); i != this->tuples_.end(); ++i){
+        for (auto j = i + 1; j != this->tuples_.end(); ++j)
+            violatedFDs(*i, *j);
+    }
 
-    this->negCoverTree->filterSpecializations();
+    this->negCoverTree_->filterSpecializations();
 }
 
 void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2){
     /* Adding the least general dependencies, violated by t1 and t2 to Negative Cover*/
-    boost::dynamic_bitset<> equalAttr(this->numberAttributes + 1, (2 << this->numberAttributes) - 1);
+    std::bitset<kMaxAttrNum> equalAttr((2 << this->numberAttributes_) - 1);
     equalAttr.reset(0);
-    boost::dynamic_bitset<> diffAttr(this->numberAttributes + 1);
+    std::bitset<kMaxAttrNum> diffAttr;
 
-    for (size_t attr = 0; attr < this->numberAttributes; ++attr){
+    for (size_t attr = 0; attr < this->numberAttributes_; ++attr){
         diffAttr[attr + 1] = (t1[attr] != t2[attr]);
     }
 
-    equalAttr -= diffAttr;
-    for (size_t attr = diffAttr.find_first(); attr != boost::dynamic_bitset<>::npos; attr = diffAttr.find_next(attr)){
-        this->negCoverTree->addFunctionalDependency(equalAttr, attr);
+    equalAttr &= (~diffAttr);
+    for (size_t attr = diffAttr._Find_first(); attr != kMaxAttrNum; attr = diffAttr._Find_next(attr)){
+        this->negCoverTree_->addFunctionalDependency(equalAttr, attr);
     }
 }
 
-void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<>& activePath){
+void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, std::bitset<kMaxAttrNum>& activePath){
     /* Building Positive Cover from Negative*/
 
-    for (size_t attr = 1; attr <= this->numberAttributes; ++attr){
+    for (size_t attr = 1; attr <= this->numberAttributes_; ++attr){
         if (negCoverSubtree.checkFd(attr - 1)){
             this->specializePositiveCover(activePath, attr);
         }
     }
 
-    for (size_t attr = 1; attr <= this->numberAttributes; ++attr){
+    for (size_t attr = 1; attr <= this->numberAttributes_; ++attr){
         if (negCoverSubtree.getChild(attr - 1)){
             activePath.set(attr);
             this->calculatePositiveCover(*negCoverSubtree.getChild(attr - 1), activePath);
@@ -82,17 +80,17 @@ void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::d
 
 }
 
-void FDep::specializePositiveCover(const boost::dynamic_bitset<>& lhs, const size_t& a){
-    boost::dynamic_bitset<> specLhs(this->numberAttributes + 1);
+void FDep::specializePositiveCover(const std::bitset<kMaxAttrNum>& lhs, const size_t& a){
+    std::bitset<kMaxAttrNum> specLhs;
 
-    while (this->posCoverTree->getGeneralizationAndDelete(lhs, a, 0, specLhs))
+    while (this->posCoverTree_->getGeneralizationAndDelete(lhs, a, 0, specLhs))
     {
 
-        for (size_t attr = this->numberAttributes; attr > 0; --attr){
+        for (size_t attr = this->numberAttributes_; attr > 0; --attr){
             if (!lhs.test(attr) && (attr != a)){
                 specLhs.set(attr);
-                if (!this->posCoverTree->containsGeneralization(specLhs, a, 0)){
-                    this->posCoverTree->addFunctionalDependency(specLhs, a);
+                if (!this->posCoverTree_->containsGeneralization(specLhs, a, 0)){
+                    this->posCoverTree_->addFunctionalDependency(specLhs, a);
                 }
                 specLhs.reset(attr);
             }
@@ -104,20 +102,20 @@ void FDep::specializePositiveCover(const boost::dynamic_bitset<>& lhs, const siz
 
 
 void FDep::loadData(){
-    this->numberAttributes = inputGenerator_.getNumberOfColumns();
-    this->columnNames.resize(this->numberAttributes);
+    this->numberAttributes_ = inputGenerator_.getNumberOfColumns();
+    this->columnNames_.resize(this->numberAttributes_);
 
-    for (size_t i = 0; i < this->numberAttributes; ++i){
-        columnNames[i] = inputGenerator_.getColumnName(i);
+    for (size_t i = 0; i < this->numberAttributes_; ++i){
+        this->columnNames_[i] = inputGenerator_.getColumnName(i);
     }
 
     std::vector<std::string> nextLine; 
     while (inputGenerator_.getHasNext()){
         nextLine = inputGenerator_.parseNext();
         if (nextLine.empty()) break;
-        this->tuples.emplace_back(std::vector<size_t>(this->numberAttributes));
-        for (size_t i = 0; i < this->numberAttributes; ++i){
-            this->tuples.back()[i] = std::hash<std::string>{}(nextLine[i]);
+        this->tuples_.emplace_back(std::vector<size_t>(this->numberAttributes_));
+        for (size_t i = 0; i < this->numberAttributes_; ++i){
+            this->tuples_.back()[i] = std::hash<std::string>{}(nextLine[i]);
         }
     } 
 

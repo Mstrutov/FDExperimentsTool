@@ -1,38 +1,37 @@
 #pragma once
 
-#include <boost/dynamic_bitset.hpp>
-#include <vector> 
-#include <string>
-
 #include "CSVParser.h"
 #include "FDAlgorithm.h"
 #include "RelationData.h"
 #include "FDTreeElement.h"
 
-class FDep : public FDAlgorithm {
-private:
-    std::vector <std::string> columnNames;
-    size_t numberAttributes=0;
+#include <vector> 
+#include <string>
 
-    FDTreeElement* negCoverTree;
-    FDTreeElement* posCoverTree;
+class FDep : public FDAlgorithm {
+ public:
+    explicit FDep(std::filesystem::path const& path, char separator = ',', bool hasHeader = true):
+            FDAlgorithm(path, separator, hasHeader){}
+
+    ~FDep() override = default;
+
+    unsigned long long execute() override;
+ private:
+    std::vector <std::string> columnNames_;
+    size_t numberAttributes_{};
+
+    FDTreeElement* negCoverTree_{};
+    FDTreeElement* posCoverTree_{};
     
-    std::vector<std::vector<size_t>> tuples;
+    std::vector<std::vector<size_t>> tuples_;
 
     void initialize();
     void negativeCover();
 
     void violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2);
 
-    void calculatePositiveCover(FDTreeElement const& negCoverSubtree, boost::dynamic_bitset<>& activePath);
-    void specializePositiveCover(const boost::dynamic_bitset<>& lhs, const size_t& a);
+    void calculatePositiveCover(FDTreeElement const& negCoverSubtree, std::bitset<kMaxAttrNum>& activePath);
+    void specializePositiveCover(const std::bitset<kMaxAttrNum>& lhs, const size_t& a);
 
     void loadData();
-public:
-
-    explicit FDep(std::filesystem::path const& path, char separator = ',', bool hasHeader = true):
-        FDAlgorithm(path, separator, hasHeader){}
-    ~FDep() override = default;;
-
-    unsigned long long execute() override;
 };

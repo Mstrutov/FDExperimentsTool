@@ -1,31 +1,31 @@
 #include "FDTreeElement.h"
 
 bool FDTreeElement::checkFd(const size_t& i) const{
-    return this->isfd[i];
+    return this->isfd_[i];
 }
 
 FDTreeElement* FDTreeElement::getChild(const size_t& i) const{
-    return this->children[i].get();
+    return this->children_[i].get();
 }
 
 void FDTreeElement::addRhsAttribute(const size_t& i){
-    this->rhsAttributes.set(i);
+    this->rhsAttributes_.set(i);
 }
 
-const boost::dynamic_bitset<>& FDTreeElement::getRhsAttributes() const{
-    return this->rhsAttributes;
+const std::bitset<kMaxAttrNum>& FDTreeElement::getRhsAttributes() const{
+    return this->rhsAttributes_;
 }
 
 void FDTreeElement::markAsLast(const size_t& i){
-    this->isfd.set(i);
+    this->isfd_.set(i);
 }
 
 bool FDTreeElement::isFinalNode(const size_t& a) const{
-    if (!this->rhsAttributes[a]){
+    if (!this->rhsAttributes_[a]){
         return false;
     }
-    for (size_t attr = 0; attr < this->maxAttributeNumber; ++attr){
-        if (children[attr] && children[attr]->getRhsAttributes()[a]){
+    for (size_t attr = 0; attr < this->maxAttributeNumber_; ++attr){
+        if (children_[attr] && children_[attr]->getRhsAttributes()[a]){
             return false;
         }
     }
@@ -33,19 +33,19 @@ bool FDTreeElement::isFinalNode(const size_t& a) const{
 }
 
 bool FDTreeElement::containsGeneralization
-(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr) const
+(const std::bitset<kMaxAttrNum>& lhs, const size_t& a, const size_t& currentAttr) const
 {
-    if (this->isfd[a - 1]){
+    if (this->isfd_[a - 1]){
         return true;
     }
     
-    size_t nextSetAttr = lhs.find_next(currentAttr);
-    if (nextSetAttr == boost::dynamic_bitset<>::npos){
+    size_t nextSetAttr = lhs._Find_next(currentAttr);
+    if (nextSetAttr == kMaxAttrNum){
         return false;
     }
     bool found = false;
-    if (this->children[nextSetAttr - 1] && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
-        found = this->children[nextSetAttr - 1]->containsGeneralization(lhs, a, nextSetAttr);
+    if (this->children_[nextSetAttr - 1] && this->children_[nextSetAttr - 1]->getRhsAttributes()[a]){
+        found = this->children_[nextSetAttr - 1]->containsGeneralization(lhs, a, nextSetAttr);
     }
 
     if (found){
@@ -55,25 +55,25 @@ bool FDTreeElement::containsGeneralization
 }
 
 bool FDTreeElement::getGeneralizationAndDelete
-(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhs)
+(const std::bitset<kMaxAttrNum>& lhs, const size_t& a, const size_t& currentAttr, std::bitset<kMaxAttrNum>& specLhs)
 {
-    if (this->isfd[a - 1]){
-        this->isfd.reset(a - 1);
-        this->rhsAttributes.reset(a);
+    if (this->isfd_[a - 1]){
+        this->isfd_.reset(a - 1);
+        this->rhsAttributes_.reset(a);
         return true;
     }
 
-    size_t nextSetAttr = lhs.find_next(currentAttr);
-    if (nextSetAttr == boost::dynamic_bitset<>::npos){
+    size_t nextSetAttr = lhs._Find_next(currentAttr);
+    if (nextSetAttr == kMaxAttrNum){
         return false;
     }
 
     bool found = false;
-    if (this->children[nextSetAttr - 1] && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
-        found = this->children[nextSetAttr - 1]->getGeneralizationAndDelete(lhs, a, nextSetAttr, specLhs);
+    if (this->children_[nextSetAttr - 1] && this->children_[nextSetAttr - 1]->getRhsAttributes()[a]){
+        found = this->children_[nextSetAttr - 1]->getGeneralizationAndDelete(lhs, a, nextSetAttr, specLhs);
         if (found){
             if (this->isFinalNode(a)){
-                this->rhsAttributes.reset(a);
+                this->rhsAttributes_.reset(a);
             }
 
             specLhs.set(nextSetAttr);
@@ -87,20 +87,20 @@ bool FDTreeElement::getGeneralizationAndDelete
 
 
 bool FDTreeElement::getSpecialization
-(const boost::dynamic_bitset<>& lhs, const size_t& a, const size_t& currentAttr, boost::dynamic_bitset<>& specLhsOut) const
+(const std::bitset<kMaxAttrNum>& lhs, const size_t& a, const size_t& currentAttr, std::bitset<kMaxAttrNum>& specLhsOut) const
 {
-    if (!this->rhsAttributes[a]){
+    if (!this->rhsAttributes_[a]){
         return false;
     }
 
     bool found = false;
     size_t attr = (currentAttr > 1 ? currentAttr : 1);
-    size_t nextSetAttr = lhs.find_next(currentAttr);
+    size_t nextSetAttr = lhs._Find_next(currentAttr);
 
-    if (nextSetAttr == boost::dynamic_bitset<>::npos){
-        while (!found && attr <= this->maxAttributeNumber){
-            if (this->children[attr - 1] && this->children[attr - 1]->getRhsAttributes()[a]){
-                found = this->children[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);
+    if (nextSetAttr == kMaxAttrNum){
+        while (!found && attr <= this->maxAttributeNumber_){
+            if (this->children_[attr - 1] && this->children_[attr - 1]->getRhsAttributes()[a]){
+                found = this->children_[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);
             }
             ++attr;
         }
@@ -111,13 +111,13 @@ bool FDTreeElement::getSpecialization
     }
 
     while (!found && attr < nextSetAttr){
-        if (this->children[attr - 1] && this->children[attr - 1]->getRhsAttributes()[a]){
-            found = this->children[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);   
+        if (this->children_[attr - 1] && this->children_[attr - 1]->getRhsAttributes()[a]){
+            found = this->children_[attr - 1]->getSpecialization(lhs, a, currentAttr, specLhsOut);   
         }
         ++attr;
     }
-    if (!found && this->children[nextSetAttr - 1] && this->children[nextSetAttr - 1]->getRhsAttributes()[a]){
-        found = this->children[nextSetAttr - 1]->getSpecialization(lhs, a, nextSetAttr, specLhsOut);
+    if (!found && this->children_[nextSetAttr - 1] && this->children_[nextSetAttr - 1]->getRhsAttributes()[a]){
+        found = this->children_[nextSetAttr - 1]->getSpecialization(lhs, a, nextSetAttr, specLhsOut);
     }
 
     specLhsOut.set(attr - 1, found);
@@ -126,22 +126,22 @@ bool FDTreeElement::getSpecialization
 }
 
 void FDTreeElement::addMostGeneralDependencies(){
-    for (size_t i = 1; i <= this->maxAttributeNumber; ++i){
-        this->rhsAttributes.set(i);
+    for (size_t i = 1; i <= this->maxAttributeNumber_; ++i){
+        this->rhsAttributes_.set(i);
     }
 
-    for (size_t i = 0; i < this->maxAttributeNumber; ++i){
-        this->isfd[i] = true;
+    for (size_t i = 0; i < this->maxAttributeNumber_; ++i){
+        this->isfd_[i] = true;
     }
 }
 
-void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, const size_t& a){
+void FDTreeElement::addFunctionalDependency(const std::bitset<kMaxAttrNum>& lhs, const size_t& a){
     FDTreeElement* currentNode = this;
     this->addRhsAttribute(a);
 
-    for (size_t i = lhs.find_first(); i != boost::dynamic_bitset<>::npos; i = lhs.find_next(i)){
-        if (currentNode->children[i - 1] == nullptr){
-            currentNode->children[i - 1] = std::make_unique<FDTreeElement>(this->maxAttributeNumber);
+    for (size_t i = lhs._Find_first(); i != kMaxAttrNum; i = lhs._Find_next(i)){
+        if (currentNode->children_[i - 1] == nullptr){
+            currentNode->children_[i - 1] = std::make_unique<FDTreeElement>(this->maxAttributeNumber_);
         }
 
         currentNode = currentNode->getChild(i - 1);
@@ -152,57 +152,75 @@ void FDTreeElement::addFunctionalDependency(const boost::dynamic_bitset<>& lhs, 
 }
 
 void FDTreeElement::filterSpecializations(){
-    boost::dynamic_bitset<> activePath(this->maxAttributeNumber + 1);
-    std::unique_ptr<FDTreeElement> filteredTree = std::make_unique<FDTreeElement>(this->maxAttributeNumber);
+    std::bitset<kMaxAttrNum> activePath;
+    std::unique_ptr<FDTreeElement> filteredTree = std::make_unique<FDTreeElement>(this->maxAttributeNumber_);
 
     this->filterSpecializationsHelper(*filteredTree, activePath);
 
-    this->children = std::move(filteredTree->children);
-    this->isfd = std::move(filteredTree->isfd);
+    this->children_ = std::move(filteredTree->children_);
+    this->isfd_ = filteredTree->isfd_;
 }
 
-void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, boost::dynamic_bitset<>& activePath){
-    for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
-        if (this->children[attr - 1]){
+void FDTreeElement::filterSpecializationsHelper(FDTreeElement& filteredTree, std::bitset<kMaxAttrNum>& activePath){
+    for (size_t attr = 1; attr <= this->maxAttributeNumber_; ++attr){
+        if (this->children_[attr - 1]){
             activePath.set(attr);
-            this->children[attr - 1]->filterSpecializationsHelper(filteredTree, activePath);
+            this->children_[attr - 1]->filterSpecializationsHelper(filteredTree, activePath);
             activePath.reset(attr);
         }
     }
 
-    for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
-        boost::dynamic_bitset<> specLhsOut(this->maxAttributeNumber + 1); 
-        if (this->isfd[attr - 1] && !filteredTree.getSpecialization(activePath, attr, 0, specLhsOut)){
+    for (size_t attr = 1; attr <= this->maxAttributeNumber_; ++attr){
+        std::bitset<kMaxAttrNum> specLhsOut; 
+        if (this->isfd_[attr - 1] && !filteredTree.getSpecialization(activePath, attr, 0, specLhsOut)){
             filteredTree.addFunctionalDependency(activePath, attr);
         }
     }
 }
 
-void FDTreeElement::printDependencies(boost::dynamic_bitset<>& activePath) {
-    std::string out;
-    for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
-        if (this->isfd[attr - 1]){
-            out = "{";
+// void FDTreeElement::printDep(const std::string& fileName, std::vector<std::string>& columnNames){
+//     std::ofstream file;
+//     file.open(fileName);
+//     std::bitset<kMaxAttrNum> activePath;
+//     printDependencies(activePath, file, columnNames);
+//     file.close();
+// }
 
-            for (size_t i = activePath.find_first(); i != boost::dynamic_bitset<>::npos; i = activePath.find_next(i)){
-                out += std::to_string(i) + ",";
-            }
+// void FDTreeElement::printDependencies(std::bitset<kMaxAttrNum>& activePath, std::ofstream& file,
+// std::vector<std::string>& columnNames) {
+//     std::string columnId = "";
+//     if (std::isdigit(columnNames[0][0])){
+//         columnId = "column";
+//     }
+//     std::string out;
+//     for (size_t attr = 1; attr <= this->maxAttributeNumber_; ++attr){
+//         if (this->isfd_[attr - 1]){
+//             out = "{";
 
-            if (out.size() > 1){
-                out = out.substr(0, out.size() - 1);
-            }
+//             for (size_t i = activePath._Find_first(); i != kMaxAttrNum; i = activePath._Find_next(i)){
+//                 if (!columnId.empty())
+//                     out += columnId + std::to_string(std::stoi(columnNames[i - 1]) + 1) + ",";
+//                 else
+//                     out += columnNames[i - 1] + ",";
+//             }
 
-            out += "} -> " + std::to_string(attr);
-            std::cout << out << std::endl;
-        }
-    }
+//             if (out.size() > 1){
+//                 out = out.substr(0, out.size() - 1);
+//             }
+//             if (!columnId.empty())
+//                 out += "} -> " + columnId + std::to_string(std::stoi(columnNames[attr - 1]) + 1);
+//             else
+//                 out += "} -> " + columnId + columnNames[attr - 1];
+//             file << out << std::endl;
+//         }
+//     }
 
-    for (size_t attr = 1; attr <= this->maxAttributeNumber; ++attr){
-        if (this->children[attr - 1]){
-            activePath.set(attr);
-            this->children[attr - 1]->printDependencies(activePath);
-            activePath.reset(attr);
-        }
-    }
+//     for (size_t attr = 1; attr <= this->maxAttributeNumber_; ++attr){
+//         if (this->children_[attr - 1]){
+//             activePath.set(attr);
+//             this->children_[attr - 1]->printDependencies(activePath, file, columnNames);
+//             activePath.reset(attr);
+//         }
+//     }
 
-}
+// }
