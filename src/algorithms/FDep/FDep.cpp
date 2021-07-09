@@ -3,6 +3,13 @@
 
 #include <chrono>
 
+//#ifndef PRINT_FDS
+//#define PRINT_FDS
+//#endif
+
+FDep::FDep(const std::filesystem::path &path, char separator, bool hasHeader):
+        FDAlgorithm(path, separator, hasHeader){}
+
 unsigned long long FDep::execute(){
 
     initialize();
@@ -22,7 +29,9 @@ unsigned long long FDep::execute(){
     std::chrono::milliseconds elapsed_milliseconds = 
     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
 
-    // posCoverTree->printDep("recent_call_result.txt", this->columnNames);
+#ifdef PRINT_FDS
+    posCoverTree_->printDep("recent_call_result.txt", this->columnNames_);
+#endif
 
     delete this->posCoverTree_;
     delete this->negCoverTree_;
@@ -35,7 +44,6 @@ void FDep::initialize(){
 }
 
 void FDep::negativeCover(){
-    /* Building Negative Cover */
     this->negCoverTree_ = new FDTreeElement(this->numberAttributes_);
     for (auto i = this->tuples_.begin(); i != this->tuples_.end(); ++i){
         for (auto j = i + 1; j != this->tuples_.end(); ++j)
@@ -45,8 +53,7 @@ void FDep::negativeCover(){
     this->negCoverTree_->filterSpecializations();
 }
 
-void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>& t2){
-    /* Adding the least general dependencies, violated by t1 and t2 to Negative Cover*/
+void FDep::violatedFDs(std::vector<size_t> const & t1, std::vector<size_t> const & t2){
     std::bitset<kMaxAttrNum> equalAttr((2 << this->numberAttributes_) - 1);
     equalAttr.reset(0);
     std::bitset<kMaxAttrNum> diffAttr;
@@ -61,8 +68,7 @@ void FDep::violatedFDs(const std::vector<size_t>& t1, const std::vector<size_t>&
     }
 }
 
-void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, std::bitset<kMaxAttrNum>& activePath){
-    /* Building Positive Cover from Negative*/
+void FDep::calculatePositiveCover(FDTreeElement const & negCoverSubtree, std::bitset<kMaxAttrNum> & activePath){
 
     for (size_t attr = 1; attr <= this->numberAttributes_; ++attr){
         if (negCoverSubtree.checkFd(attr - 1)){
@@ -80,7 +86,7 @@ void FDep::calculatePositiveCover(FDTreeElement const& negCoverSubtree, std::bit
 
 }
 
-void FDep::specializePositiveCover(const std::bitset<kMaxAttrNum>& lhs, const size_t& a){
+void FDep::specializePositiveCover(std::bitset<kMaxAttrNum> const & lhs, size_t const & a){
     std::bitset<kMaxAttrNum> specLhs;
 
     while (this->posCoverTree_->getGeneralizationAndDelete(lhs, a, 0, specLhs))
@@ -106,7 +112,7 @@ void FDep::loadData(){
     this->columnNames_.resize(this->numberAttributes_);
 
     for (size_t i = 0; i < this->numberAttributes_; ++i){
-        this->columnNames_[i] = inputGenerator_.getColumnName(i);
+        this->columnNames_[i] = inputGenerator_.getColumnName(static_cast<int>(i));
     }
 
     std::vector<std::string> nextLine; 
