@@ -145,6 +145,7 @@ std::unique_ptr<PositionListIndex> PositionListIndex::probe(std::shared_ptr<cons
 
     std::unordered_map<int, std::vector<int>> partialIndex;
 
+    
     for (auto & positions : index){
         for (int position : positions){
             if (probingTable == nullptr) std::cout << "NULLPTR" << std::endl;
@@ -259,5 +260,4 @@ std::string PositionListIndex::toString() const {
     res.push_back(']');
     return res;
 }
-
 

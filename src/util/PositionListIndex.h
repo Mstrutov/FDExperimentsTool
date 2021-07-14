@@ -4,7 +4,7 @@
 //
 
 #pragma once
-
+#include <iostream>
 #include <memory>
 #include <deque>
 #include <vector>
@@ -26,7 +26,6 @@ private:
     unsigned int originalRelationSize;
     std::shared_ptr<const std::vector<int>> probingTableCache;
     unsigned int freq_ = 0;
-
 
     static unsigned long long calculateNep(unsigned int numElements) {
         return static_cast<unsigned long long>(numElements) * (numElements - 1) / 2;
@@ -62,6 +61,7 @@ public:
     double getNep()                             const { return (double) nep; }
     unsigned long long getNepAsLong()           const { return nep; }
     unsigned int getNumNonSingletonCluster()    const { return index.size(); }
+    unsigned int getNumCluster()                const { return index.size() + originalRelationSize - size; }
     unsigned int getFreq()                      const { return freq_; }
     unsigned int getSize()                      const { return size; }
     double getEntropy()                         const { return entropy; }
@@ -72,9 +72,13 @@ public:
 
     void incFreq() { freq_++; }
 
-    std::unique_ptr<PositionListIndex> intersect(PositionListIndex const* that) const;
-    std::unique_ptr<PositionListIndex> probe(std::shared_ptr<const std::vector<int>> probingTable) const;
+    virtual std::unique_ptr<PositionListIndex> intersect(PositionListIndex const* that) const;
+    virtual std::unique_ptr<PositionListIndex> probe(std::shared_ptr<const std::vector<int>> probingTable) const;
     std::unique_ptr<PositionListIndex> probeAll(Vertical const& probingColumns,
                                                 ColumnLayoutRelationData & relationData);
     std::string toString() const;
+
+    friend class UnstrippedPositionListIndex;
+    virtual ~PositionListIndex() {};
+
 };
