@@ -12,14 +12,15 @@
 
 #include "algorithms/Pyro.h"
 #include "algorithms/TaneX.h"
+#include "algorithms/FDep/FDep.h"
 
 namespace po = boost::program_options;
 
 INITIALIZE_EASYLOGGINGPP
 
 bool checkOptions(std::string const& alg, double error) {
-    if (alg != "pyro" && alg != "tane") {
-        std::cout << "ERROR: no matching algorithm. Available algorithms are:\n\tpyro\n\ttane.\n" << std::endl;
+    if (alg != "pyro" && alg != "tane" && alg != "fdep") {
+        std::cout << "ERROR: no matching algorithm. Available algorithms are:\n\tpyro\n\ttane.\n\tfdep" << std::endl;
         return false;
     }
     if (error > 1 || error < 0) {
@@ -41,7 +42,7 @@ int main(int argc, char const *argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "print help")
-        ("algo", po::value<std::string>(&alg), "algorithm [pyro|tane]")
+        ("algo", po::value<std::string>(&alg), "algorithm [pyro|tane|fdep]")
         ("data", po::value<std::string>(&dataset), "path to CSV file, relative to ./inputData")
         ("sep", po::value<char>(&separator), "CSV separator")
         ("hasHeader", po::value<bool>(&hasHeader), "CSV header presence flag [true|false]. Default true")
@@ -88,7 +89,9 @@ int main(int argc, char const *argv[]) {
     if (alg == "pyro") {
         algorithmInstance = std::make_unique<Pyro>(path, separator, hasHeader, seed, error, maxLhs, parallelism);
     } else if (alg == "tane"){
-        algorithmInstance = std::make_unique<Tane>(path, separator, hasHeader, error, maxLhs);
+        algorithmInstance = std::make_unique<Tane>(path, separator, hasHeader);
+    } else if (alg == "fdep"){
+        algorithmInstance = std::make_unique<FDep>(path, separator, hasHeader);
     }
     try {
         unsigned long long elapsedTime = algorithmInstance->execute();
